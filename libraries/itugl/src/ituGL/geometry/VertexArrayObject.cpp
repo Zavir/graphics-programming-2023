@@ -7,7 +7,6 @@
 VertexArrayObject::VertexArrayObject() : Object(NullHandle)
 {
     Handle& handle = GetHandle();
-    // (todo) 00.1: Generate 1 vertex array
     glGenVertexArrays(1, &handle);
 }
 
@@ -15,7 +14,6 @@ VertexArrayObject::VertexArrayObject() : Object(NullHandle)
 VertexArrayObject::~VertexArrayObject()
 {
     Handle& handle = GetHandle();
-    // (todo) 00.1: Delete 1 vertex array
     glDeleteVertexArrays(1, &handle);
 }
 
@@ -23,7 +21,6 @@ VertexArrayObject::~VertexArrayObject()
 void VertexArrayObject::Bind() const
 {
     Handle handle = GetHandle();
-    // (todo) 00.1: Bind vertex array
     glBindVertexArray(handle);
 }
 
@@ -31,7 +28,6 @@ void VertexArrayObject::Bind() const
 void VertexArrayObject::Unbind()
 {
     Handle handle = NullHandle;
-    // (todo) 00.1: Bind null vertex array
     glBindVertexArray(handle);
 }
 
@@ -47,9 +43,9 @@ void VertexArrayObject::SetAttribute(GLuint location, const VertexAttribute& att
     const unsigned char* pointer = nullptr; // Actual base pointer is in VBO
     pointer += offset;
 
-    // (todo) 00.1: Set the VertexAttribute pointer in that location
+    // Set the VertexAttribute pointer in this location
     glVertexAttribPointer(location, components, type, normalized, stride, pointer);
 
-    // (todo) 00.1: Finally, we enable the VertexAttribute in that location
+    // Finally, we enable the VertexAttribute in this location
     glEnableVertexAttribArray(location);
 }

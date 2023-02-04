@@ -4,7 +4,6 @@
 BufferObject::BufferObject() : Object(NullHandle)
 {
     Handle& handle = GetHandle();
-    // (todo) 00.1: Generate 1 buffer
     glGenBuffers(1, &handle);
 }
 
@@ -12,7 +11,6 @@ BufferObject::BufferObject() : Object(NullHandle)
 BufferObject::~BufferObject()
 {
     Handle& handle = GetHandle();
-    // (todo) 00.1: Delete 1 buffer
     glDeleteBuffers(1, &handle);
 }
 
@@ -20,7 +18,6 @@ BufferObject::~BufferObject()
 void BufferObject::Bind(Target target) const
 {
     Handle handle = GetHandle();
-    // (todo) 00.1: Bind buffer
     glBindBuffer(target, handle);
 }
 
@@ -28,7 +25,6 @@ void BufferObject::Bind(Target target) const
 void BufferObject::Unbind(Target target)
 {
     Handle handle = NullHandle;
-    // (todo) 00.1: Bind null buffer
     glBindBuffer(target, handle);
 }
 
@@ -36,7 +32,6 @@ void BufferObject::Unbind(Target target)
 void BufferObject::AllocateData(size_t size, Usage usage)
 {
     Target target = GetTarget();
-    // (todo) 00.1: Allocate without initial data (you can use nullptr instead)
     glBufferData(target, size, nullptr, usage);
 }
 
@@ -44,14 +39,12 @@ void BufferObject::AllocateData(size_t size, Usage usage)
 void BufferObject::AllocateData(std::span<const std::byte> data, Usage usage)
 {
     Target target = GetTarget();
-    // (todo) 00.1: Allocate with initial data, specifying the size in bytes and the pointer to the data
     glBufferData(target, data.size_bytes(), data.data(), usage);
 }
 
 // Get buffer Target and set buffer subdata
 void BufferObject::UpdateData(std::span<const std::byte> data, size_t offset)
 {
-    // (todo) 00.5: Update buffer subdata
     Target target = GetTarget();
     glBufferSubData(target, offset, data.size_bytes(), data.data());
 }

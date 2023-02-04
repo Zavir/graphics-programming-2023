@@ -9,6 +9,7 @@
 #include <ituGL/core/DeviceGL.h>
 
 #include <iostream>
+#include <array>
 
 int buildShaderProgram();
 void processInput(GLFWwindow* window);
