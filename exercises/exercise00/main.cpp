@@ -6,6 +6,7 @@
 #include <ituGL/geometry/VertexBufferObject.h>
 #include <ituGL/geometry/VertexAttribute.h>
 #include <ituGL/geometry/ElementBufferObject.h>
+#include <ituGL/core/DeviceGL.h>
 
 #include <iostream>
 

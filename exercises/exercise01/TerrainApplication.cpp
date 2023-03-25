@@ -1,9 +1,11 @@
 #include "TerrainApplication.h"
+#include <ituGL/geometry/VertexAttribute.h>
 
 // (todo) 01.1: Include the libraries you need
 
 #include <cmath>
 #include <iostream>
+#include <vector>
 
 // Helper structures. Declared here only for this exercise
 struct Vector2
@@ -43,19 +45,38 @@ void TerrainApplication::Initialize()
     BuildShaders();
 
     // (todo) 01.1: Create containers for the vertex position
-
+    std::vector<Vector3> positions;
 
     // (todo) 01.1: Fill in vertex data
-
+    for (int y = 0; y < m_gridY; y++) {
+        for (int x = 0; x < m_gridX; x++) {
+            // first triangle
+            positions.push_back(Vector3(x, y, 0)); //bottom left
+            positions.push_back(Vector3(x + 1, y, 0)); //bottom right
+            positions.push_back(Vector3(x, y, 0)); //top left
+           
+            // second triangle
+            positions.push_back(Vector3(x + 1, y, 0)); //bottom right
+            positions.push_back(Vector3(x, y + 1, 0)); //top left
+            positions.push_back(Vector3(x + 1, y + 1, 0)); //top right
+        }
+    }
 
     // (todo) 01.1: Initialize VAO, and VBO
+    VBO.Bind();
+    VBO.AllocateData<Vector3>(std::span(positions));
+    
+    VAO.Bind();
 
+    VertexAttribute attribute(Data::Type::Float, 3);
+    VAO.SetAttribute(0, attribute, 0);
 
     // (todo) 01.5: Initialize EBO
 
 
     // (todo) 01.1: Unbind VAO, and VBO
-
+    VertexBufferObject::Unbind();
+    VertexArrayObject::Unbind();
 
     // (todo) 01.5: Unbind EBO
 
@@ -79,6 +100,8 @@ void TerrainApplication::Render()
     glUseProgram(m_shaderProgram);
 
     // (todo) 01.1: Draw the grid
+    VBO.Bind();
+    glDrawArrays(GL_TRIANGLES, 0, m_gridX * m_gridY * 6);
 
 }
 
