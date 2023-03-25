@@ -21,7 +21,7 @@ void BufferObject::Bind(Target target) const
 {
     Handle handle = GetHandle();
     // (todo) 00.1: Bind buffer
-    glBindBuffer(GL_ARRAY_BUFFER, handle);
+    glBindBuffer(target, handle);
 }
 
 // Bind the null handle to the specific target
@@ -29,7 +29,7 @@ void BufferObject::Unbind(Target target)
 {
     Handle handle = NullHandle;
     // (todo) 00.1: Bind null buffer
-    glBindBuffer(GL_ARRAY_BUFFER, handle);
+    glBindBuffer(target, handle);
 }
 
 // Get buffer Target and allocate buffer data
@@ -52,4 +52,6 @@ void BufferObject::AllocateData(std::span<const std::byte> data, Usage usage)
 void BufferObject::UpdateData(std::span<const std::byte> data, size_t offset)
 {
     // (todo) 00.5: Update buffer subdata
+    Target target = GetTarget();
+    glBufferSubData(target, offset, data.size_bytes(), data.data());
 }
