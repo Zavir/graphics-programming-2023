@@ -5,6 +5,7 @@
 // (todo) 01.1: Include the libraries you need
 #include<ituGL/geometry/VertexArrayObject.h>
 #include<ituGL/geometry/VertexBufferObject.h>
+#include<ituGL/geometry/ElementBufferObject.h>
 
 
 class TerrainApplication : public Application
@@ -29,6 +30,7 @@ private:
     // (todo) 01.1: Declare an VBO, VAO
     VertexBufferObject VBO;
     VertexArrayObject VAO;
+    ElementBufferObject EBO;
 
     // (todo) 01.5: Declare an EBO
 

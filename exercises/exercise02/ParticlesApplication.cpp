@@ -2,6 +2,7 @@
 
 #include <ituGL/shader/Shader.h>
 #include <ituGL/geometry/VertexAttribute.h>
+#include <ituGL/core/DeviceGL.h>
 #include <cassert>
 #include <array>
 #include <fstream>
@@ -13,15 +14,23 @@ struct Particle
 {
     glm::vec2 position;
     // (todo) 02.X: Add more vertex attributes
- 
+    float size;
+    float birth;
+    float duration;
+    Color color;
+    glm::vec2 velocity;
 };
 
 // List of attributes of the particle. Must match the structure above
-const std::array<VertexAttribute, 1> s_vertexAttributes =
+const std::array<VertexAttribute, 6> s_vertexAttributes =
 {
     VertexAttribute(Data::Type::Float, 2), // position
     // (todo) 02.X: Add more vertex attributes
-
+    VertexAttribute(Data::Type::Float, 1),
+    VertexAttribute(Data::Type::Float, 1),
+    VertexAttribute(Data::Type::Float, 1),
+    VertexAttribute(Data::Type::Float, 3),
+    VertexAttribute(Data::Type::Float, 2)
 };
 
 
@@ -49,6 +58,11 @@ void ParticlesApplication::Initialize()
 
     // We need to enable V-sync, otherwise the framerate would be too high and spawn multiple particles in one click
     GetDevice().SetVSyncEnabled(true);
+
+    GetDevice().EnableFeature(GL_PROGRAM_POINT_SIZE);
+
+    GetDevice().EnableFeature(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 }
 
 void ParticlesApplication::Update()
@@ -66,7 +80,7 @@ void ParticlesApplication::Update()
         // (todo) 02.X: Compute new particle attributes here
 
 
-        EmitParticle(mousePosition);
+        EmitParticle(mousePosition, RandomRange(10.0f, 30.0f), RandomColor());
     }
 
     // save the mouse position (to compare next frame and obtain velocity)
@@ -82,9 +96,10 @@ void ParticlesApplication::Render()
     m_shaderProgram.Use();
 
     // (todo) 02.4: Set CurrentTime uniform
-
+    m_shaderProgram.SetUniform(m_shaderProgram.GetUniformLocation("CurrentTime"), GetCurrentTime());
 
     // (todo) 02.6: Set Gravity uniform
+    m_shaderProgram.SetUniform(m_shaderProgram.GetUniformLocation("Gravity"), -4.8f);
 
 
     // Bind the particle system VAO
@@ -142,13 +157,20 @@ void ParticlesApplication::InitializeShaders()
     }
 }
 
-void ParticlesApplication::EmitParticle(const glm::vec2& position)
+void ParticlesApplication::EmitParticle(const glm::vec2& position, const float size, Color color)
 {
     // Initialize the particle
     Particle particle;
     particle.position = position;
     // (todo) 02.X: Set the value for other attributes of the particle
+    particle.size = size;
 
+    particle.duration = RandomRange(1, 2);
+    particle.birth = GetCurrentTime();
+
+    particle.color = color;
+
+    particle.velocity = 0.1f * (position - m_mousePosition) / GetDeltaTime();
 
     // Get the index in the circular buffer
     unsigned int particleIndex = m_particleCount % m_particleCapacity;

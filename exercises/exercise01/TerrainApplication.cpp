@@ -7,6 +7,9 @@
 #include <iostream>
 #include <vector>
 
+#define STB_PERLIN_IMPLEMENTATION
+#include<stb_perlin.h>
+
 // Helper structures. Declared here only for this exercise
 struct Vector2
 {
@@ -28,12 +31,19 @@ struct Vector3
     }
 };
 
-// (todo) 01.8: Declare an struct with the vertex format
+Vector3 GetColorFromHeight(float height);
 
+// (todo) 01.8: Declare an struct with the vertex format
+struct Vertex {
+    Vector3 position;
+    Vector2 texture;
+    Vector3 color;
+    Vector3 normal;
+};
 
 
 TerrainApplication::TerrainApplication()
-    : Application(1024, 1024, "Terrain demo"), m_gridX(16), m_gridY(16), m_shaderProgram(0)
+    : Application(1050, 1050, "Terrain demo"), m_gridX(200), m_gridY(200), m_shaderProgram(0)
 {
 }
 
@@ -41,35 +51,74 @@ void TerrainApplication::Initialize()
 {
     Application::Initialize();
 
+    // Enable wireframe mode
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
     // Build shaders and store in m_shaderProgram
     BuildShaders();
 
-    // (todo) 01.1: Create containers for the vertex position
-    std::vector<Vector3> positions;
+    std::vector<unsigned int> indices;
+    std::vector<Vertex> vertices;
 
-    // (todo) 01.1: Fill in vertex data
-    for (int y = 0; y < m_gridY; y++) {
-        for (int x = 0; x < m_gridX; x++) {
-            // first triangle
-            positions.push_back(Vector3(x, y, 0)); //bottom left
-            positions.push_back(Vector3(x + 1, y, 0)); //bottom right
-            positions.push_back(Vector3(x, y, 0)); //top left
-           
-            // second triangle
-            positions.push_back(Vector3(x + 1, y, 0)); //bottom right
-            positions.push_back(Vector3(x, y + 1, 0)); //top left
-            positions.push_back(Vector3(x + 1, y + 1, 0)); //top right
+    Vector2 scale(1.0f / m_gridX, 1.0f / m_gridY);
+
+    unsigned int rowCount = m_gridY + 1;
+    unsigned int columnCount = m_gridX + 1;
+    
+    for (int j = 0; j < rowCount; ++j)
+    {
+        for (int i = 0; i < columnCount; ++i)
+        {
+            // Vertex data for this vertex only
+            Vertex& vertex = vertices.emplace_back();
+            float x = i * scale.x - 0.5f;
+            float y = j * scale.y - 0.5f;
+            float z = stb_perlin_fbm_noise3(x * 2, y * 2, 0.0f, 1.9f, 0.5f, 8) * 0.5f;
+            vertex.position = Vector3(x, y, z);
+            vertex.texture = Vector2(i, j);
+            vertex.color = GetColorFromHeight(z);
+            vertex.normal = Vector3(0.0f, 0.0f, 1.0f); // Actual value computed after all vertices are created
+
+            // Index data for quad formed by previous vertices and current
+            if (i > 0 && j > 0)
+            {
+                unsigned int top_right = j * columnCount + i; // Current vertex
+                unsigned int top_left = top_right - 1;
+                unsigned int bottom_right = top_right - columnCount;
+                unsigned int bottom_left = bottom_right - 1;
+
+                //Triangle 1
+                indices.push_back(bottom_left);
+                indices.push_back(bottom_right);
+                indices.push_back(top_left);
+
+                //Triangle 2
+                indices.push_back(bottom_right);
+                indices.push_back(top_left);
+                indices.push_back(top_right);
+            }
         }
     }
 
-    // (todo) 01.1: Initialize VAO, and VBO
+    VertexAttribute posAttribute(Data::Type::Float, 3);
+    VertexAttribute texAttribute(Data::Type::Float, 2);
+    VertexAttribute colorAttribute(Data::Type::Float, 3);
+
     VBO.Bind();
-    VBO.AllocateData<Vector3>(std::span(positions));
     
+    auto posOffset = 0u;
+    auto texCoordsOffset = posOffset + posAttribute.GetSize();
+    auto colorOffset = texCoordsOffset + texAttribute.GetSize();
+
+    VBO.AllocateData(std::span(vertices));    
     VAO.Bind();
 
-    VertexAttribute attribute(Data::Type::Float, 3);
-    VAO.SetAttribute(0, attribute, 0);
+    EBO.Bind();
+    EBO.AllocateData(std::span(indices));
+
+    VAO.SetAttribute(0, posAttribute, 0, sizeof(Vertex));
+    VAO.SetAttribute(1, texAttribute, texCoordsOffset, sizeof(Vertex));
+    VAO.SetAttribute(2, colorAttribute, colorOffset, sizeof(Vertex));
 
     // (todo) 01.5: Initialize EBO
 
@@ -80,6 +129,32 @@ void TerrainApplication::Initialize()
 
     // (todo) 01.5: Unbind EBO
 
+    glEnable(GL_DEPTH_TEST);
+
+}
+
+Vector3 GetColorFromHeight(float height)
+{
+    if (height > 0.3f)
+    {
+        return Vector3(1.0f, 1.0f, 1.0f); // Snow
+    }
+    else if (height > 0.1f)
+    {
+        return Vector3(0.3, 0.3f, 0.35f); // Rock
+    }
+    else if (height > -0.05f)
+    {
+        return Vector3(0.1, 0.4f, 0.15f); // Grass
+    }
+    else if (height > -0.1f)
+    {
+        return Vector3(0.6, 0.5f, 0.4f); // Sand
+    }
+    else
+    {
+        return Vector3(0.1f, 0.1f, 0.3f); // Water
+    }
 }
 
 void TerrainApplication::Update()
@@ -100,9 +175,8 @@ void TerrainApplication::Render()
     glUseProgram(m_shaderProgram);
 
     // (todo) 01.1: Draw the grid
-    VBO.Bind();
-    glDrawArrays(GL_TRIANGLES, 0, m_gridX * m_gridY * 6);
-
+    VAO.Bind();
+    glDrawElements(GL_TRIANGLES, m_gridX * m_gridY * 6, GL_UNSIGNED_INT, nullptr);
 }
 
 void TerrainApplication::Cleanup()

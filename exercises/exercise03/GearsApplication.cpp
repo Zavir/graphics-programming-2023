@@ -3,6 +3,7 @@
 #include <ituGL/shader/Shader.h>
 #include <ituGL/shader/ShaderProgram.h>
 #include <ituGL/geometry/VertexFormat.h>
+#include <ituGL/camera/Camera.h>
 #include <cassert>  // for asserts
 #include <array>    // to get shader error messages
 #include <fstream>  // shader loading
@@ -15,6 +16,8 @@
 GearsApplication::GearsApplication()
     : Application(1024, 1024, "Gears demo")
     , m_colorUniform(-1)
+    , m_worldMatrixUniform(-1)
+    , m_viewProjMatrixUniform(-1)
 {
 }
 
@@ -36,8 +39,23 @@ void GearsApplication::Update()
     const Window& window = GetMainWindow();
 
     // (todo) 03.5: Update the camera matrices
+    int width, height;
+    window.GetDimensions(width, height);
+    float aspect = static_cast<float>(width) / height;
 
+    bool perspective = true;
 
+    if (perspective) {
+        camera.SetPerspectiveProjectionMatrix(std::numbers::pi / 2, aspect, 0.1f, 10.0f);
+    }
+    else {
+        glm::vec3 halfSize(aspect, 1.0f, 10.0f);
+        camera.SetOrthographicProjectionMatrix(-halfSize, halfSize);
+    }
+    glm::vec3 halfSize(aspect, 1.0f, 10.0f);
+
+    glm::vec2 mousePos = window.GetMousePosition(true);
+    camera.SetViewMatrix(glm::vec3(mousePos, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 }
 
 void GearsApplication::Render()
@@ -49,20 +67,25 @@ void GearsApplication::Render()
     m_shaderProgram.Use();
 
     // (todo) 03.5: Set the view projection matrix from the camera. Once set, we will use it for all the objects
-
+    m_shaderProgram.SetUniform(m_viewProjMatrixUniform, camera.GetViewProjectionMatrix());
 
     // (todo) 03.1: Draw large gear at the center
-    glm::mat4 centerGearMatrix(1.0f);
-    DrawGear(m_largeGear, centerGearMatrix, Color(1.0f, 1.0f, 1.0f));
+    float deg = 0.5f * GetCurrentTime();
+
+    glm::mat4 largeGearMatrix(glm::rotate(deg, glm::vec3(0, 0, 1)));
+    DrawGear(m_largeGear, largeGearMatrix, Color(1.0f, 0.0f, 0.0f));
 
     // (todo) 03.2: Draw medium gear to the right
-
+    glm::mat4 mediumGearMatrix(glm::translate(glm::vec3(0.75f, 0.0f, 0.0f)) * glm::rotate(deg * -16/8, glm::vec3(0, 0, 1)));
+    DrawGear(m_mediumGear, mediumGearMatrix, Color(0.0f, 1.0f, 0.0f));
 
     // (todo) 03.3: Draw small gear at the top-left corner
-
+    glm::mat4 smallGearMatrix(glm::translate(glm::vec3(-1, 1, 0)) * glm::rotate(deg * -16/30 - 0.05f, glm::vec3(0, 0, 1)) * glm::scale(glm::vec3(7.5f)));
+    DrawGear(m_smallGear, smallGearMatrix, Color(0.0f, 0.0f, 1.0f));
 
     // (todo) 03.4: Draw small gear linked to the center gear
-
+    glm::mat4 linkedGearMatrix(largeGearMatrix * glm::translate(glm::vec3(0, 0.2f, 0)) * glm::rotate(deg * -1.0f, glm::vec3(0, 0, 1)));
+    DrawGear(m_smallGear, linkedGearMatrix, Color(1.0f, 1.0f, 0.0f));
 
     Application::Render();
 }
@@ -96,11 +119,10 @@ void GearsApplication::InitializeShaders()
     m_colorUniform = m_shaderProgram.GetUniformLocation("Color");
 
     // (todo) 03.1: Find the WorldMatrix uniform location
-
+    m_worldMatrixUniform = m_shaderProgram.GetUniformLocation("WorldMatrix");
 
     // (todo) 03.5: Find the ViewProjMatrix uniform location
-
-
+    m_viewProjMatrixUniform = m_shaderProgram.GetUniformLocation("ViewProjMatrix");
 }
 
 // Draw a gear mesh with a specific world matrix and color
@@ -109,7 +131,7 @@ void GearsApplication::DrawGear(const Mesh& mesh, const glm::mat4& worldMatrix, 
     m_shaderProgram.SetUniform(m_colorUniform, static_cast<glm::vec3>(color));
 
     // (todo) 03.1: Set the value of the WorldMatrix uniform
-
+    m_shaderProgram.SetUniform(m_worldMatrixUniform, worldMatrix);
 
     mesh.DrawSubmesh(0);
 }
