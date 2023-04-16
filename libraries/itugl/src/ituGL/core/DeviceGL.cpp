@@ -104,7 +104,12 @@ void DeviceGL::SetFeatureEnabled(GLenum feature, bool enabled)
 // enable / disable wireframe mode
 void DeviceGL::SetWireframeEnabled(bool enabled)
 {
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    if (enabled) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
+    else {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
 }
 
 // enable / disable v-sync
